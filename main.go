@@ -40,6 +40,18 @@ func queryReadings(table string) ([]Point, error) {
 	return points, nil
 }
 
+func basicAuth(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, pass, ok := r.BasicAuth()
+		if !ok || pass != os.Getenv("VIEW_PASSWORD") {
+			w.Header().Set("WWW-Authenticate", `Basic realm="sensor-view"`)
+			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
 func apiHandler(table string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		points, err := queryReadings(table)
@@ -72,10 +84,14 @@ func main() {
 		log.Fatal("cannot connect to db:", err)
 	}
 
-	http.Handle("/", http.FileServer(http.Dir("./static")))
-	http.HandleFunc("/api/temperature", apiHandler("temperatures"))
-	http.HandleFunc("/api/humidity", apiHandler("humidities"))
-	http.HandleFunc("/api/co2", apiHandler("co2s"))
+	if os.Getenv("VIEW_PASSWORD") == "" {
+		log.Fatal("VIEW_PASSWORD is required")
+	}
+
+	http.Handle("/", basicAuth(http.FileServer(http.Dir("./static"))))
+	http.Handle("/api/temperature", basicAuth(apiHandler("temperatures")))
+	http.Handle("/api/humidity", basicAuth(apiHandler("humidities")))
+	http.Handle("/api/co2", basicAuth(apiHandler("co2s")))
 
 	log.Println("listening on :8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))

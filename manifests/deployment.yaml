@@ -31,3 +31,8 @@ spec:
                 secretKeyRef:
                   name: sensor-view-secret
                   key: database-url
+            - name: VIEW_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: sensor-view-secret
+                  key: view-password
