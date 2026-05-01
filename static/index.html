@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sensor View</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+  <style>
+    body { font-family: sans-serif; max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
+    .chart-wrap { position: relative; height: 240px; margin-bottom: 2rem; }
+    select { margin-bottom: 1rem; }
+  </style>
+</head>
+<body>
+  <h1>Sensor View</h1>
+  <label>センサー: <select id="sensorFilter"><option value="">すべて</option></select></label>
+  <div class="chart-wrap"><canvas id="tempChart"></canvas></div>
+  <div class="chart-wrap"><canvas id="humChart"></canvas></div>
+  <div class="chart-wrap"><canvas id="co2Chart"></canvas></div>
+
+  <script>
+    const METRICS = [
+      { key: 'temperature', label: '温度 (°C)',    canvasId: 'tempChart', color: 'rgb(255,99,132)' },
+      { key: 'humidity',    label: '湿度 (%)',     canvasId: 'humChart',  color: 'rgb(54,162,235)' },
+      { key: 'co2',         label: 'CO2 (ppm)',    canvasId: 'co2Chart',  color: 'rgb(75,192,192)' },
+    ];
+
+    let allData = {};
+    let charts = {};
+
+    function buildDatasets(metric, sensorFilter) {
+      const rows = allData[metric.key] || [];
+      const filtered = sensorFilter ? rows.filter(r => r.sensor_id === sensorFilter) : rows;
+      // センサーIDごとに分けて表示
+      const sensors = [...new Set(filtered.map(r => r.sensor_id))];
+      return sensors.map((sid, i) => {
+        const pts = filtered.filter(r => r.sensor_id === sid).reverse();
+        return {
+          label: sid,
+          data: pts.map(r => ({ x: new Date(r.recorded_at), y: r.value })),
+          borderColor: `hsl(${i * 60 + parseInt(metric.color.match(/\d+/)[0])}, 70%, 50%)`,
+          tension: 0.2,
+          pointRadius: 2,
+          fill: false,
+        };
+      });
+    }
+
+    function renderCharts(sensorFilter) {
+      METRICS.forEach(metric => {
+        const datasets = buildDatasets(metric, sensorFilter);
+        if (charts[metric.key]) {
+          charts[metric.key].data.datasets = datasets;
+          charts[metric.key].update();
+          return;
+        }
+        charts[metric.key] = new Chart(document.getElementById(metric.canvasId), {
+          type: 'line',
+          data: { datasets },
+          options: {
+            maintainAspectRatio: false,
+            plugins: { title: { display: true, text: metric.label } },
+            scales: {
+              x: {
+                type: 'time',
+                time: { tooltipFormat: 'yyyy/MM/dd HH:mm', displayFormats: { hour: 'MM/dd HH:mm', day: 'MM/dd' } },
+                ticks: { maxTicksLimit: 8, maxRotation: 45, minRotation: 45 },
+              },
+              y: { title: { display: true, text: metric.label } },
+            },
+          },
+        });
+      });
+    }
+
+    async function load() {
+      await Promise.all(METRICS.map(async m => {
+        const res = await fetch(`/api/${m.key}`);
+        allData[m.key] = await res.json() ?? [];
+      }));
+
+      // センサーID一覧を収集
+      const ids = new Set();
+      Object.values(allData).forEach(rows => rows.forEach(r => ids.add(r.sensor_id)));
+      const sel = document.getElementById('sensorFilter');
+      ids.forEach(id => {
+        const opt = document.createElement('option');
+        opt.value = opt.textContent = id;
+        sel.appendChild(opt);
+      });
+
+      renderCharts('');
+    }
+
+    document.getElementById('sensorFilter').addEventListener('change', e => renderCharts(e.target.value));
+    load();
+  </script>
+</body>
+</html>
