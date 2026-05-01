@@ -84,6 +84,9 @@ func main() {
 		log.Fatal("cannot connect to db:", err)
 	}
 
+	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
 	if os.Getenv("VIEW_PASSWORD") == "" {
 		log.Fatal("VIEW_PASSWORD is required")
 	}
