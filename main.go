@@ -96,6 +96,8 @@ func main() {
 	http.Handle("/api/humidity", basicAuth(apiHandler("humidities")))
 	http.Handle("/api/co2", basicAuth(apiHandler("co2s")))
 
+	http.Handle("/api/smell", basicAuth(apiHandler("smells")))
+
 	log.Println("listening on :8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }

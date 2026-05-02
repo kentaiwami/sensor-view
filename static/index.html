@@ -18,12 +18,14 @@
   <div class="chart-wrap"><canvas id="tempChart"></canvas></div>
   <div class="chart-wrap"><canvas id="humChart"></canvas></div>
   <div class="chart-wrap"><canvas id="co2Chart"></canvas></div>
+  <div class="chart-wrap"><canvas id="smellChart"></canvas></div>
 
   <script>
     const METRICS = [
-      { key: 'temperature', label: '温度 (°C)',    canvasId: 'tempChart', color: 'rgb(255,99,132)' },
-      { key: 'humidity',    label: '湿度 (%)',     canvasId: 'humChart',  color: 'rgb(54,162,235)' },
-      { key: 'co2',         label: 'CO2 (ppm)',    canvasId: 'co2Chart',  color: 'rgb(75,192,192)' },
+      { key: 'temperature', label: '温度 (°C)',    canvasId: 'tempChart',  color: 'rgb(255,99,132)' },
+      { key: 'humidity',    label: '湿度 (%)',     canvasId: 'humChart',   color: 'rgb(54,162,235)' },
+      { key: 'co2',         label: 'CO2 (ppm)',    canvasId: 'co2Chart',   color: 'rgb(75,192,192)' },
+      { key: 'smell',       label: 'におい',        canvasId: 'smellChart', color: 'rgb(153,102,255)' },
     ];
 
     let allData = {};
