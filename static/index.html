@@ -37,7 +37,7 @@
       // センサーIDごとに分けて表示
       const sensors = [...new Set(filtered.map(r => r.sensor_id))];
       return sensors.map((sid, i) => {
-        const pts = filtered.filter(r => r.sensor_id === sid).reverse();
+        const pts = filtered.filter(r => r.sensor_id === sid);
         return {
           label: sid,
           data: pts.map(r => ({ x: new Date(r.recorded_at), y: r.value })),

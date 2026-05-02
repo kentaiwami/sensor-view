@@ -22,7 +22,7 @@ type Point struct {
 func queryReadings(table string) ([]Point, error) {
 	rows, err := db.Query(
 		"SELECT sensor_id, value, recorded_at FROM "+table+
-			" ORDER BY recorded_at DESC LIMIT 500",
+			" WHERE recorded_at >= NOW() - INTERVAL 7 DAY ORDER BY recorded_at ASC",
 	)
 	if err != nil {
 		return nil, err
