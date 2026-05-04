@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
@@ -14,9 +15,9 @@ import (
 var db *sql.DB
 
 type Point struct {
-	RecordedAt string  `json:"recorded_at"`
-	SensorID   string  `json:"sensor_id"`
-	Value      float64 `json:"value"`
+	RecordedAt time.Time `json:"recorded_at"`
+	SensorID   string    `json:"sensor_id"`
+	Value      float64   `json:"value"`
 }
 
 func queryReadings(table string) ([]Point, error) {
@@ -70,7 +71,7 @@ func main() {
 
 	dsn := os.Getenv("DATABASE_URL")
 	if dsn == "" {
-		dsn = "sensor:sensor@tcp(localhost:3306)/sensordb?parseTime=true"
+		dsn = "sensor:sensor@tcp(localhost:3306)/sensordb?parseTime=true&loc=Asia%2FTokyo"
 	}
 
 	var err error
