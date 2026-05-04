@@ -6,6 +6,7 @@ COPY . .
 RUN go build -o server .
 
 FROM alpine:3.19
+RUN apk add --no-cache tzdata
 WORKDIR /app
 COPY --from=builder /app/server .
 COPY static/ ./static/
