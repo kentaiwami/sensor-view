@@ -1,11 +1,14 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -103,9 +106,24 @@ func main() {
 	http.Handle("/api/temperature", basicAuth(apiHandler("temperatures")))
 	http.Handle("/api/humidity", basicAuth(apiHandler("humidities")))
 	http.Handle("/api/co2", basicAuth(apiHandler("co2s")))
-
 	http.Handle("/api/smell", basicAuth(apiHandler("smells")))
 
-	log.Println("listening on :8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	srv := &http.Server{Addr: ":8080"}
+	go func() {
+		log.Println("listening on :8080")
+		if err := srv.ListenAndServe(); err != http.ErrServerClosed {
+			log.Fatal(err)
+		}
+	}()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGTERM, syscall.SIGINT)
+	<-quit
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Fatal(err)
+	}
+	log.Println("server shutdown")
 }
