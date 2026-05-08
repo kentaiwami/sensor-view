@@ -25,10 +25,8 @@ type Point struct {
 
 func queryReadings(table string) ([]Point, error) {
 	rows, err := db.Query(
-		"SELECT sensor_id, AVG(value), DATE_FORMAT(recorded_at, '%Y-%m-%d %H:00:00') FROM "+table+
-			" WHERE recorded_at >= NOW() - INTERVAL 7 DAY"+
-			" GROUP BY sensor_id, DATE_FORMAT(recorded_at, '%Y-%m-%d %H:00:00')"+
-			" ORDER BY recorded_at ASC",
+		"SELECT sensor_id, value, recorded_at FROM "+table+
+			" WHERE recorded_at >= NOW() - INTERVAL 6 HOUR ORDER BY recorded_at ASC",
 	)
 	if err != nil {
 		return nil, err
@@ -38,11 +36,9 @@ func queryReadings(table string) ([]Point, error) {
 	var points []Point
 	for rows.Next() {
 		var p Point
-		var t string
-		if err := rows.Scan(&p.SensorID, &p.Value, &t); err != nil {
+		if err := rows.Scan(&p.SensorID, &p.Value, &p.RecordedAt); err != nil {
 			return nil, err
 		}
-		p.RecordedAt, _ = time.ParseInLocation("2006-01-02 15:04:05", t, time.Local)
 		points = append(points, p)
 	}
 	return points, nil
