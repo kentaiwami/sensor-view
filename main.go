@@ -38,9 +38,11 @@ func queryReadings(table string) ([]Point, error) {
 	var points []Point
 	for rows.Next() {
 		var p Point
-		if err := rows.Scan(&p.SensorID, &p.Value, &p.RecordedAt); err != nil {
+		var t string
+		if err := rows.Scan(&p.SensorID, &p.Value, &t); err != nil {
 			return nil, err
 		}
+		p.RecordedAt, _ = time.ParseInLocation("2006-01-02 15:04:05", t, time.Local)
 		points = append(points, p)
 	}
 	return points, nil
